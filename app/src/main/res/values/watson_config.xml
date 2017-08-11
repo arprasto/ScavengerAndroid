@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Watson Text To Speech service credentials-->
+    <string name="tts_uname">xxxxxxxxxx</string> 
+    <string name="tts_pass">xxxxxxxxxx</string> 
+
+    <!-- Watson IoT device details-->
+    <string name="Organization_ID">xxxxxxxxxx</string> 
+    <string name="type">xxxxxxxxxx</string> 
+    <string name="id">xxxxxxxxxx</string> 
+    <string name="Authentication_Token">xxxxxxxxxx</string> 
+    <string name="Authentication_Method">token</string> 
+    <string name="iot_event_for_img_base64">capture_store</string> 
+
+    <!-- Watson Visual Recognition service credentials-->
+    <string name="vr_api_key">xxxxxxxxxx</string> 
+    <string name="vr_classifier_name">DemoClassifier</string> 
+</resources>
