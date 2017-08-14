@@ -47,6 +47,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -178,10 +179,9 @@ public class FullscreenActivity extends AppCompatActivity {
     private PowerManager.WakeLock wakeLock = null;
     public static IoTUtilService iot_svc = null;
     public static BlockingQueue<URI> queue = new LinkedBlockingQueue<URI>();
-    private boolean training_flag = false,positive_flag=false,negative_flag=false;
-    String classifier_name = "";
+    private boolean training_flag = false,positive_flag=false;
+    String vr_class_name = "";
     File positive_zip = null,negative_zip = null;
-
     final Context context = this;
 
     @Override
@@ -221,6 +221,22 @@ public class FullscreenActivity extends AppCompatActivity {
 
         //set all watson services credentials
         mContext = getApplicationContext();
+
+        try {
+        negative_zip = File.createTempFile("negative_examples","zip");
+            FileOutputStream os = new FileOutputStream(negative_zip);
+        InputStream is = mContext.getAssets().open("australianterrier.zip");
+            byte[] buffer = new byte[1024];
+            while(is.read(buffer) != -1){
+                os.write(buffer);
+            }
+            is.close();
+            os.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        System.out.println(negative_zip.getPath()+":: arpit ::"+negative_zip.exists());
         tts_uname = mContext.getString(R.string.tts_uname);
         tts_pass= mContext.getString(R.string.tts_pass);
         Organization_ID= mContext.getString(R.string.Organization_ID);
@@ -231,6 +247,8 @@ public class FullscreenActivity extends AppCompatActivity {
         iot_event_for_img_base64= mContext.getString(R.string.iot_event_for_img_base64);
         vr_api_key= mContext.getString(R.string.vr_api_key);
         vr_classifier_name= mContext.getString(R.string.vr_classifier_name);
+
+        //final Iterator<VisualClassifier> classifiers_it = null;
 
         mVisible = true;
         mControlsView = findViewById(R.id.fullscreen_content_controls);
@@ -254,126 +272,13 @@ public class FullscreenActivity extends AppCompatActivity {
             actionBar.setDisplayHomeAsUpEnabled(true);
         }*/
 
-        train_btn = (FloatingActionButton) findViewById(R.id.trainClassifier);
-        train_btn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                training_flag=true;
-                upload_btn.setVisibility(View.INVISIBLE);
-                capture_btn.setVisibility(View.INVISIBLE);
-                train_btn.setVisibility(View.INVISIBLE);
-                exit_button.setVisibility(View.INVISIBLE);
-
-                trainCaptureImgActionButton.setVisibility(View.VISIBLE);
-                exitTraining_btn.setVisibility(View.VISIBLE);
-
-                tts_svc.playText("you can use camera capture button to capture the images. " +
-                        "you need to give ten positive and ten negative images to train the model. " +
-                        "Once you capture them custom classifier will be automatically created." +
-                        "please capture ten positive images first.",Voice.EN_MICHAEL);
-
-                LayoutInflater li = LayoutInflater.from(context);
-                View promptsView = li.inflate(R.layout.prompts, null);
-
-                AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(
-                        context);
-
-                // set prompts.xml to alertdialog builder
-                alertDialogBuilder.setView(promptsView);
-
-                final EditText userInput = (EditText) promptsView
-                        .findViewById(R.id.editTextDialogUserInput);
-
-                // set dialog message
-                alertDialogBuilder
-                        .setCancelable(false)
-                        .setPositiveButton("OK",
-                                new DialogInterface.OnClickListener() {
-                                    public void onClick(DialogInterface dialog,int id) {
-                                        // get user input and set it to result
-                                        // edit text
-                                        classifier_name = userInput.getText().toString().trim();
-                                    }
-                                })
-                        .setNegativeButton("Cancel",
-                                new DialogInterface.OnClickListener() {
-                                    public void onClick(DialogInterface dialog,int id) {
-                                        dialog.cancel();
-                                        exitTraining_btn.performClick();
-                                    }
-                                });
-
-                // create alert dialog
-                AlertDialog alertDialog = alertDialogBuilder.create();
-
-                // show it
-                alertDialog.show();
-                positive_flag = true;
-            }
-        });
-
-        trainCaptureImgActionButton = (FloatingActionButton) findViewById(R.id.trainCaptureImgActionButton);
-        trainCaptureImgActionButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                cameraHelper.dispatchTakePictureIntent();
-            }
-        });
-
-        PowerManager powerManager = (PowerManager) getSystemService(POWER_SERVICE);
-        wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,
-                "MyWakelockTag");
-        wakeLock.acquire();
-
-        exit_button = (FloatingActionButton) findViewById(R.id.ExitActionButton);
-        exit_button.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                applicationExit();
-            }
-        });
-
-        exitTraining_btn=(FloatingActionButton) findViewById(R.id.ExitTrainingActionButton);
-        exitTraining_btn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                upload_btn.setVisibility(View.VISIBLE);
-                capture_btn.setVisibility(View.VISIBLE);
-                train_btn.setVisibility(View.VISIBLE);
-                exit_button.setVisibility(View.VISIBLE);
-
-                trainCaptureImgActionButton.setVisibility(View.INVISIBLE);
-                exitTraining_btn.setVisibility(View.INVISIBLE);
-                training_flag = false;
-            }
-        });
-
-        upload_btn = (FloatingActionButton) findViewById(R.id.uploadActionButton);
-        upload_btn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent galleryIntent = new Intent(Intent.ACTION_PICK, android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-                startActivityForResult(galleryIntent, REQUEST_GALLERY);
-            }
-        });
-
-        cameraHelper = new CameraHelper(this);
-
-        capture_btn = (FloatingActionButton) findViewById(R.id.CaptureImgActionButton);
-        capture_btn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                cameraHelper.dispatchTakePictureIntent();
-            }
-        });
-
         if(checkInternetConnection()){
             /*
             initiate all the services instances
              */
-
             tts_svc = new ScavengerTextToSpeech(tts_uname,tts_pass);
             vr_svc = new VRMain(vr_version,vr_api_key);
+
 
             this.iot_svc = new IoTUtilService(FullscreenActivity.Organization_ID,
                     FullscreenActivity.type,
@@ -393,6 +298,119 @@ public class FullscreenActivity extends AppCompatActivity {
             /*stt_svc = new SpeechToText();
             stt_svc.setUsernameAndPassword(stt_uname,stt_pass);*/
 
+            train_btn = (FloatingActionButton) findViewById(R.id.trainClassifier);
+            train_btn.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    training_flag=true;
+                    upload_btn.setVisibility(View.INVISIBLE);
+                    capture_btn.setVisibility(View.INVISIBLE);
+                    train_btn.setVisibility(View.INVISIBLE);
+                    exit_button.setVisibility(View.INVISIBLE);
+
+                    trainCaptureImgActionButton.setVisibility(View.VISIBLE);
+                    exitTraining_btn.setVisibility(View.VISIBLE);
+
+                    tts_svc.playText("you can use camera capture button to capture the images. " +
+                            "you need to give ten positive images to train the model. " +
+                            "Once you capture them custom classifier will be automatically created.",Voice.EN_MICHAEL);
+
+                    LayoutInflater li = LayoutInflater.from(context);
+                    View promptsView = li.inflate(R.layout.prompts, null);
+
+                    AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(
+                            context);
+
+                    // set prompts.xml to alertdialog builder
+                    alertDialogBuilder.setView(promptsView);
+
+                    final EditText userInput = (EditText) promptsView
+                            .findViewById(R.id.editTextDialogUserInput);
+
+                    // set dialog message
+                    alertDialogBuilder
+                            .setCancelable(false)
+                            .setPositiveButton("OK",
+                                    new DialogInterface.OnClickListener() {
+                                        public void onClick(DialogInterface dialog,int id) {
+                                            // get user input and set it to result
+                                            // edit text
+                                            vr_class_name = userInput.getText().toString().trim();
+                                            tts_svc.playText("please capture 10 positive images now.",Voice.EN_MICHAEL);
+                                        }
+                                    })
+                            .setNegativeButton("Cancel",
+                                    new DialogInterface.OnClickListener() {
+                                        public void onClick(DialogInterface dialog,int id) {
+                                            dialog.cancel();
+                                            exitTraining_btn.performClick();
+                                        }
+                                    });
+
+                    // create alert dialog
+                    AlertDialog alertDialog = alertDialogBuilder.create();
+
+                    // show it
+                    alertDialog.show();
+                    positive_flag = true;
+                }
+            });
+
+            trainCaptureImgActionButton = (FloatingActionButton) findViewById(R.id.trainCaptureImgActionButton);
+            trainCaptureImgActionButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    cameraHelper.dispatchTakePictureIntent();
+                }
+            });
+
+            PowerManager powerManager = (PowerManager) getSystemService(POWER_SERVICE);
+            wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,
+                    "MyWakelockTag");
+            wakeLock.acquire();
+
+            exit_button = (FloatingActionButton) findViewById(R.id.ExitActionButton);
+            exit_button.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    applicationExit();
+                }
+            });
+
+            exitTraining_btn=(FloatingActionButton) findViewById(R.id.ExitTrainingActionButton);
+            exitTraining_btn.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    upload_btn.setVisibility(View.VISIBLE);
+                    capture_btn.setVisibility(View.VISIBLE);
+                    train_btn.setVisibility(View.VISIBLE);
+                    exit_button.setVisibility(View.VISIBLE);
+
+                    trainCaptureImgActionButton.setVisibility(View.INVISIBLE);
+                    exitTraining_btn.setVisibility(View.INVISIBLE);
+                    training_flag = false;
+                }
+            });
+
+            upload_btn = (FloatingActionButton) findViewById(R.id.uploadActionButton);
+            upload_btn.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Intent galleryIntent = new Intent(Intent.ACTION_PICK, android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+                    startActivityForResult(galleryIntent, REQUEST_GALLERY);
+                }
+            });
+
+            cameraHelper = new CameraHelper(this);
+
+            capture_btn = (FloatingActionButton) findViewById(R.id.CaptureImgActionButton);
+            capture_btn.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    cameraHelper.dispatchTakePictureIntent();
+                }
+            });
+
         }
         else{
             Toast.makeText(this, " No Internet Connection available ", Toast.LENGTH_LONG).show();
@@ -409,10 +427,10 @@ public class FullscreenActivity extends AppCompatActivity {
 
                 Bitmap selectedImage = cameraHelper.getBitmap(resultCode);
                 //System.out.println(" bitmap captured : "+selectedImage.getHeight());
-                selectedImage = resizeBitmapForWatson(selectedImage, 904);
+                selectedImage = resizeBitmapForWatson(selectedImage, 902);
                 // Reformat Bitmap into a .jpg and save as file to input to Watson.
                 ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-                selectedImage.compress(Bitmap.CompressFormat.JPEG, 0, bytes);
+                selectedImage.compress(Bitmap.CompressFormat.JPEG, 80, bytes);
 
                 File tempPhoto = null;
                 try {
@@ -423,7 +441,7 @@ public class FullscreenActivity extends AppCompatActivity {
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-                System.out.println("created file = "+tempPhoto.exists()+":"+tempPhoto.getAbsolutePath());
+                //System.out.println("created file = "+tempPhoto.exists()+":"+tempPhoto.getAbsolutePath());
                 if(!training_flag)
                 this.queue.add(tempPhoto.toURI());
                 if(training_flag)
@@ -433,19 +451,22 @@ public class FullscreenActivity extends AppCompatActivity {
                             if(positive_flag) {
                                 positive_flag=false;
                                 tts_svc.playText("you have captured ten positive images. Please wait.", Voice.EN_MICHAEL);
-                                positive_zip = new ZipFiles().createAndAddZipFiles("positive_example.zip",trainingFiles);
-                                trainingFiles.removeAll(trainingFiles);
-                                tts_svc.playText("you need to capture 10 negative images now.", Voice.EN_MICHAEL);
+                                positive_zip = new ZipFiles().createAndAddZipFiles(vr_class_name +"_positive_example.zip",trainingFiles);
+                                trainingFiles=null;
+                                trainingFiles=new ArrayList<File>();
                             }
-                            if(!positive_flag) {
-                                trainingFiles.removeAll(trainingFiles);
+                            /*if(!positive_flag) {
+                                tts_svc.playText("you have captured ten negative images now. Please wait.", Voice.EN_MICHAEL);
                                 negative_zip = new ZipFiles().createAndAddZipFiles("negative_example.zip",trainingFiles);
-                                tts_svc.playText("classifier is being trained now. Please wait.", Voice.EN_MICHAEL);
-                                exitTraining_btn.performClick();
-                            }
+                                trainingFiles=null;
+                                trainingFiles=new ArrayList<File>();
+                            }*/
                         }
-                        if(negative_zip != null && positive_zip != null)
-                        new CreateClassifier(negative_zip,positive_zip,classifier_name).execute();
+                        if(negative_zip != null && positive_zip != null) {
+                            new CreateClassifier(negative_zip, positive_zip, vr_class_name).execute();
+                            training_flag = false;
+                            exitTraining_btn.performClick();
+                        }
                     }
             }
             if(requestCode == REQUEST_GALLERY){
@@ -455,15 +476,16 @@ public class FullscreenActivity extends AppCompatActivity {
                 Bitmap selectedImage = fetchBitmapFromUri(uri);
 
                 // Resize the Bitmap to constrain within Watson Image Recognition's Size Limit.
-                selectedImage = resizeBitmapForWatson(selectedImage, 904);
+                selectedImage = resizeBitmapForWatson(selectedImage, 902);
 
                 // Reformat Bitmap into a .jpg and save as file to input to Watson.
                 ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-                selectedImage.compress(Bitmap.CompressFormat.JPEG, 0, bytes);
+                selectedImage.compress(Bitmap.CompressFormat.JPEG, 80, bytes);
 
                 File tempPhoto = null;
                 try {
                     tempPhoto = File.createTempFile("gallery", ".jpg", getCacheDir());
+
                     FileOutputStream out = new FileOutputStream(tempPhoto);
                     out.write(bytes.toByteArray());
                     out.close();
@@ -486,7 +508,8 @@ public class FullscreenActivity extends AppCompatActivity {
         delayedHide(100);
 
         if(!this.getIntent().hasExtra("calling_act"))
-        tts_svc.playText("welcome watson bluemix platform. To end the game anytime click on exit button.", Voice.EN_MICHAEL);
+        tts_svc.playText("welcome watson bluemix platform. To end the game anytime click on exit " +
+                "button. To train and create the custom class. click on train button.", Voice.EN_MICHAEL);
         //new ListenVoice().execute();
 
     }
@@ -562,63 +585,6 @@ public class FullscreenActivity extends AppCompatActivity {
         finish();
         System.exit(0);
     }
-
- /*   //Private Methods - Speech to Text
-    private RecognizeOptions getRecognizeOptions() {
-        return new RecognizeOptions.Builder()
-                .continuous(true)
-                .contentType(ContentType.OPUS.toString())
-                .model("en-US_BroadbandModel")
-                .interimResults(true)
-                .inactivityTimeout(-1)
-                .build();
-    }
-
-    private class MicrophoneRecognizeDelegate implements RecognizeCallback {
-        @Override
-        public void onTranscription(SpeechResults speechResults) {
-            System.out.println(speechResults);
-            if(speechResults.getResults() != null && !speechResults.getResults().isEmpty()) {
-                String text = speechResults.getResults().get(0).getAlternatives().get(0).getTranscript();
-                System.out.println("---------------------------"+text+"---------------------------");
-                if(text.toLowerCase().contains("game")){
-                    Intent scavenger = new Intent(FullscreenActivity.this,Scavenger.class);
-                    FullscreenActivity.this.startActivityForResult(scavenger,1);
-                }
-
-                if(text.toLowerCase().contains("i'm done") ||
-                        text.toLowerCase().contains("i am done") ||
-                        text.toLowerCase().contains("exit")){
-                    applicationExit();
-                }
-            }
-        }
-
-        @Override public void onConnected() {
-
-        }
-
-        @Override public void onError(Exception e) {
-        }
-
-        @Override public void onDisconnected() {
-        }
-
-        @Override
-        public void onInactivityTimeout(RuntimeException runtimeException) {
-
-        }
-
-        @Override
-        public void onListening() {
-
-        }
-
-        @Override
-        public void onTranscriptionComplete() {
-
-        }
-    }*/
 
     /**
      * Check Internet Connection
@@ -701,22 +667,24 @@ public class FullscreenActivity extends AppCompatActivity {
         public OkHttpsURLConnection con = null;
 
         File negative_zip=null,positive_zip = null;
-        String classifier_name = null;
-        public CreateClassifier(File negative_zip,File positive_zip,String classifier_name){
+        String class_name = null;
+        public CreateClassifier(File negative_zip,File positive_zip,String class_name){
             this.negative_zip = negative_zip;
             this.positive_zip = positive_zip;
-            this.classifier_name=classifier_name;
+            this.class_name =class_name;
         }
 
         @Override
         protected Void doInBackground(Void... params) {
+            tts_svc.playText("classifier is being trained now. Please wait.", Voice.EN_MICHAEL);
             ClassifierOptions classifierOptions = new ClassifierOptions.Builder().classifierName(vr_classifier_name)
                     .negativeExamples(negative_zip)
-                    .addClass(classifier_name, positive_zip)
+                    .addClass(class_name, positive_zip)
                     .build();
 
             boolean create_classifier_flag = true, update_classifier_flage=false,exit_loop=false;
             String classifier_id=null;
+
             Iterator<VisualClassifier> classifiers_it = vr_svc.getVRInstance().getClassifiers().execute().iterator();
             while(classifiers_it.hasNext()){
                 VisualClassifier classifier = classifiers_it.next();
@@ -732,10 +700,15 @@ public class FullscreenActivity extends AppCompatActivity {
                     {
                         cnt++;
                         Log.d(TAG," checking for "+classifier_id+"."+claz.getName());
-                        if(claz.getName().equalsIgnoreCase(classifier_name)){
+                        if(claz.getName().equalsIgnoreCase(class_name)){
                             Log.d(TAG," found preexisting "+classifier_id+"."+claz.getName());
-                            tts_svc.playText("looks like given class name already exists. Please try giving different class name and rerun this application",Voice.EN_MICHAEL);
-                            System.exit(0);
+                            tts_svc.playText("looks like given class name already exists. Please try giving different class name. and rerun training.",Voice.EN_MICHAEL);
+                            try {
+                                Thread.sleep(6000);
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+                            //System.exit(0);
                         }
                         else if(cnt==classifier.getClasses().size()){
                             update_classifier_flage = true;
@@ -749,83 +722,21 @@ public class FullscreenActivity extends AppCompatActivity {
                 if(exit_loop) break;
             }
 
+
             if(create_classifier_flag){
                 Log.d(TAG,"creating new classifier "+classifierOptions.classifierName());
                 tts_svc.playText("looks like you are training very first time. Let me train the model for you.",Voice.EN_MICHAEL);
                 VisualClassifier vc = vr_svc.getVRInstance().createClassifier(classifierOptions).execute();
-                while(true){
-                    String res = null;
-                    try {
-                        Thread.sleep(6000);
-                        try{
-                            res = vr_svc.getVRInstance().getClassifier(vc.getId()).execute().getStatus().toString();
-                        }catch(Exception e){
-                            e.printStackTrace();
-                            tts_svc.playText("classifier is being trained. please try using it after some time",Voice.EN_MICHAEL);
-                            System.exit(0);
-                        }
-                        if(res.toLowerCase().contains("training")){
-                            tts_svc.playText("please wait classifier is being trained.",Voice.EN_MICHAEL);
-                        }
-                        else if(res.toLowerCase().contains("ready")){
-                            tts_svc.playText("classifier has been trained now. To create another classifier you need to rerun this application.",Voice.EN_MICHAEL);
-                            System.exit(0);
-                        }
-                        else if(res.toLowerCase().contains("fail")){
-                            tts_svc.playText("there was some error while creating classifier. Please try again later.",Voice.EN_MICHAEL);
-                            vr_svc.getVRInstance().deleteClassifier(vc.getId());
-                            System.exit(0);
-                        }
-                        else{
-                            tts_svc.playText("System will exit now. Please try again later.",Voice.EN_MICHAEL);
-                            System.exit(0);
-                        }
-                    } catch (InterruptedException e) {
-                        // TODO Auto-generated catch block
-                        e.printStackTrace();
-                    }
-                }
+                tts_svc.playText("your classifier is being trained. please try using it after some time.",Voice.EN_MICHAEL);
+
             }
 
             if(update_classifier_flage && classifier_id!=null){
                 Log.d(TAG,"updating classifier "+classifierOptions.classifierName());
                 tts_svc.playText("Let me update classifier for you.",Voice.EN_MICHAEL);
                 VisualClassifier vc = vr_svc.getVRInstance().updateClassifier(classifier_id, classifierOptions).execute();
-                while(true){
-                    String res = null;
-                    try {
-                        Thread.sleep(6000);
-                        try{
-                            res = vr_svc.getVRInstance().getClassifier(vc.getId()).execute().getStatus().toString();
-                        }catch(Exception e){
-                            e.printStackTrace();
-                            tts_svc.playText("classifier is being trained. please try using it after some time",Voice.EN_MICHAEL);
-                            System.exit(0);
-                        }
-                        if(res.toLowerCase().contains("retraining")){
-                            tts_svc.playText("please wait classifier is being retrained.",Voice.EN_MICHAEL);
-                        }
-                        else if(res.toLowerCase().contains("ready")){
-                            tts_svc.playText("classifier has been trained now. To create another classifier you need to rerun this application.",Voice.EN_MICHAEL);
-                            System.exit(0);
-                        }
-                        else if(res.toLowerCase().contains("fail")){
-                            tts_svc.playText("there was some error while creating classifier. Please try again later.",Voice.EN_MICHAEL);
-                            vr_svc.getVRInstance().deleteClassifier(vc.getId());
-                            System.exit(0);
-                        }
-                        else{
-                            tts_svc.playText("System will exit now. Please try again later.",Voice.EN_MICHAEL);
-                            System.exit(0);
-                        }
-                    } catch (InterruptedException e) {
-                        // TODO Auto-generated catch block
-                        e.printStackTrace();
-                    }
-                }
+                tts_svc.playText("your classifier is being updated. please try using it after some time.",Voice.EN_MICHAEL);
             }
-
-
             return null;
         }
     }
