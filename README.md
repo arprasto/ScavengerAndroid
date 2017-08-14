@@ -101,6 +101,12 @@ Navigate to file app/src/main/res/values/watson_config.xml and provide Bluemix s
     <string name="vr_classifier_name">DemoClassifier</string> 
 
 
+Home screen for Scavenger :
+<img src="app/libs/Snip20170814_13.png" allign="center"/>
+
+Training screen :
+<img src="app/libs/Snip20170814_14.png" allign="center"/>
+
 How to see VR Results:
 
 Please refer ScavengerWebResultApp here : https://github.com/arprasto/ScavengerWebResultApp
