@@ -1,5 +1,6 @@
 package com.ibm.watson.scavenger.iot;
 
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 
 import com.ibm.watson.scavenger.main.FullscreenActivity;
@@ -33,7 +34,8 @@ public class IoTUtilService{
                           String id,
                           String Authentication_Token,
                           String Authentication_Method,
-                          String iot_event_for_img_base64) {
+                          String iot_event_for_img_base64,
+                          AppCompatActivity appCompatActivity) {
         Properties options = new Properties();
         options.setProperty("Organization-ID", Organization_ID);
         options.setProperty("type", type);
@@ -44,7 +46,7 @@ public class IoTUtilService{
         try {
             iot_client = new DeviceClient(options);
             //start the call back thread to receive device-commands from IoT.
-            MyNewCommandCallback callback = new MyNewCommandCallback();
+            MyNewCommandCallback callback = new MyNewCommandCallback(appCompatActivity);
             Thread t = new Thread(callback);
             t.start();
             iot_client.setCommandCallback(callback);
@@ -69,8 +71,14 @@ public class IoTUtilService{
 
 class MyNewCommandCallback implements CommandCallback, Runnable {
 
+    private AppCompatActivity appCompatActivity = null;
+    public MyNewCommandCallback(AppCompatActivity appCompatActivity){
+        this.appCompatActivity = appCompatActivity;
+    }
+
     // A queue to hold & process the commands for smooth handling of MQTT messages
     private BlockingQueue<Command> queue = new LinkedBlockingQueue<Command>();
+
 
     /**
      * This method is invoked by the library whenever there is command matching the subscription criteria
@@ -89,31 +97,58 @@ class MyNewCommandCallback implements CommandCallback, Runnable {
             Command cmd = null;
             try {
                 cmd = queue.take();
+
                 System.out.println("COMMAND RECEIVED = '" + cmd.getCommand() + "'\t with data="+cmd.getData().toString());
+
+                appCompatActivity.runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        FullscreenActivity.imgsQueSize.setText(FullscreenActivity.queue.size()+"");
+                    }
+                });
 
                 if(cmd.getCommand().equals("refreshUI"))
                 {
                     publish_flag = true;
+                    appCompatActivity.runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            FullscreenActivity.imgsProcessing.setText("0");
+                        }
+                    });
+
                 }
 
                 if(cmd.getCommand().equals("checkForPublishIoT") || first_run){
                     first_run = false;
-                    if(FullscreenActivity.queue.size() > 0 && publish_flag)
-                    {
+                    if(FullscreenActivity.queue.size() > 0 && publish_flag) {
                         try {
                             publish_flag = false;
                             URI uri = FullscreenActivity.queue.take();
-                            System.out.println("posting to IoT:"+uri.toString());
+                            System.out.println("posting to IoT:" + uri.toString());
                             JsonObject event_payload = new JsonObject();
-                            event_payload.addProperty("img_base64",new IMGUtils().encodeIMGFileToBase64Binary(new File(uri)));
+                            event_payload.addProperty("img_base64", new IMGUtils().encodeIMGFileToBase64Binary(new File(uri)));
                             event_payload.addProperty("img_id", new File(uri).getName());
                             ///new FullscreenActivity.PushToIoT(event_payload).execute();
-                            FullscreenActivity.iot_svc.getIot_client().publishEvent(FullscreenActivity.iot_svc.getIot_event_for_img_base64(),event_payload);
+                            FullscreenActivity.iot_svc.getIot_client().publishEvent(FullscreenActivity.iot_svc.getIot_event_for_img_base64(), event_payload);
+                            appCompatActivity.runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    FullscreenActivity.imgsProcessing.setText("1");
+                                }
+                            });
+
                         } catch (InterruptedException e) {
                             e.printStackTrace();
                         }
                     }
                 }
+                appCompatActivity.runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        FullscreenActivity.imgsQueSize.setText(FullscreenActivity.queue.size()+"");
+                    }
+                });
             } catch (InterruptedException e) {}
         }
     }

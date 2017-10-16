@@ -26,6 +26,111 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:fitsSystemWindows="true">
+
+        <LinearLayout
+            android:id="@+id/statusLabels1"
+            style="?metaButtonBarStyle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="top|center_horizontal"
+            android:background="@color/black_overlay"
+            android:orientation="vertical"
+            android:gravity="center"
+            tools:ignore="UselessParent">
+            <LinearLayout
+                android:id="@+id/statusLabels10"
+                style="?metaButtonBarStyle"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_gravity="top|center_horizontal"
+                android:background="@color/black_overlay"
+                android:orientation="horizontal"
+                android:gravity="center"
+                tools:ignore="UselessParent">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="0.69"
+                    android:orientation="horizontal"/>
+
+                <ImageView
+                android:id="@+id/queueSize"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                app:srcCompat="@android:drawable/ic_menu_sort_by_size" />
+
+            <TextView
+                android:id="@+id/imgsQueSize"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="25sp"
+                android:inputType="textPersonName"
+                android:text="0" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1.76"
+                android:orientation="horizontal"/>
+
+            <Chronometer
+                android:id="@+id/chronCounter"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center_horizontal"
+                android:textColor="#0f0"
+                android:textSize="25sp"
+                android:textStyle="bold"
+                />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1.76"
+                android:orientation="horizontal"/>
+
+            <ImageView
+                android:id="@+id/ImgsBeingProcessed"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                app:srcCompat="@android:drawable/ic_menu_send" />
+
+            <TextView
+                android:id="@+id/imgsProcessing"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="25sp"
+                android:inputType="textPersonName"
+                android:text="0" />
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="0.69"
+                android:orientation="horizontal"/>
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/trainImgsCount"
+                style="?metaButtonBarStyle"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_gravity="top|center_horizontal"
+                android:background="@color/black_overlay"
+                android:orientation="horizontal"
+                android:gravity="center"
+                tools:ignore="UselessParent">
+                <TextView
+                    android:id="@+id/trainCountRemaining"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="25sp"
+                    android:inputType="textPersonName"
+                    android:text="0" />
+            </LinearLayout>
+        </LinearLayout>
         <LinearLayout
             android:id="@+id/fullscreen_content_controls"
             style="?metaButtonBarStyle"
@@ -42,8 +147,8 @@
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1.76"
-                android:orientation="horizontal">
-            </LinearLayout>
+                android:orientation="horizontal"/>
+
 
             <android.support.design.widget.FloatingActionButton
                 android:id="@+id/uploadActionButton"
@@ -58,8 +163,8 @@
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1.76"
-                android:orientation="horizontal">
-            </LinearLayout>
+                android:orientation="horizontal"/>
+
 
             <android.support.design.widget.FloatingActionButton
                 android:id="@+id/CaptureImgActionButton"
@@ -84,8 +189,8 @@
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1.76"
-                android:orientation="horizontal">
-            </LinearLayout>
+                android:orientation="horizontal"/>
+
             <android.support.design.widget.FloatingActionButton
                 android:id="@+id/trainClassifier"
                 android:layout_width="wrap_content"
@@ -99,9 +204,8 @@
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1.76"
-                android:orientation="horizontal">
+                android:orientation="horizontal"/>
 
-            </LinearLayout>
 
             <android.support.design.widget.FloatingActionButton
                 android:id="@+id/ExitActionButton"
@@ -124,12 +228,8 @@
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1.76"
-                android:orientation="horizontal">
-
-            </LinearLayout>
-
+                android:orientation="horizontal"/>
 
         </LinearLayout>
-    </FrameLayout>
-
+        </FrameLayout>
 </FrameLayout>

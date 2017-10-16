@@ -9,6 +9,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.graphics.Matrix;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
@@ -26,7 +27,9 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
+import android.widget.Chronometer;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.arpitrastogi.stest.R;
@@ -50,10 +53,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Random;
+import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 import okhttp3.internal.huc.OkHttpsURLConnection;
 
@@ -142,9 +149,9 @@ public class FullscreenActivity extends AppCompatActivity {
     private List<File> trainingFiles = new ArrayList<File>();
     VRMain vr_svc = null;
     private Context mContext;
-
-    //n - where n negative and n positive images.
+    private Chronometer counter = null;
     private int train_no_of_image = 10;
+    private TextView trainCountRemaining = null;
 
     /*
     *
@@ -179,10 +186,12 @@ public class FullscreenActivity extends AppCompatActivity {
     private PowerManager.WakeLock wakeLock = null;
     public static IoTUtilService iot_svc = null;
     public static BlockingQueue<URI> queue = new LinkedBlockingQueue<URI>();
-    private boolean training_flag = false,positive_flag=false;
-    String vr_class_name = "";
+    private boolean training_flag = false,positive_flag=false,remove_capture_btn_flag=false;
+    String vr_class_name = "",default_negative_zip=null;
     File positive_zip = null,negative_zip = null;
     final Context context = this;
+    long camera_visible_time_frame=0;
+    public static TextView imgsQueSize=null,imgsProcessing=null;
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
@@ -224,8 +233,9 @@ public class FullscreenActivity extends AppCompatActivity {
 
         try {
         negative_zip = File.createTempFile("negative_examples","zip");
+            default_negative_zip = mContext.getString(R.string.default_negative_zip);
             FileOutputStream os = new FileOutputStream(negative_zip);
-        InputStream is = mContext.getAssets().open("australianterrier.zip");
+        InputStream is = mContext.getAssets().open(default_negative_zip);
             byte[] buffer = new byte[1024];
             while(is.read(buffer) != -1){
                 os.write(buffer);
@@ -235,6 +245,8 @@ public class FullscreenActivity extends AppCompatActivity {
         } catch (IOException e) {
             e.printStackTrace();
         }
+        camera_visible_time_frame = Long.valueOf(mContext.getString(R.string.time_frame).trim());
+        train_no_of_image = Integer.valueOf(mContext.getString(R.string.train_no_of_image).trim());
 
         System.out.println(negative_zip.getPath()+":: arpit ::"+negative_zip.exists());
         tts_uname = mContext.getString(R.string.tts_uname);
@@ -249,6 +261,50 @@ public class FullscreenActivity extends AppCompatActivity {
         vr_classifier_name= mContext.getString(R.string.vr_classifier_name);
 
         //final Iterator<VisualClassifier> classifiers_it = null;
+
+        imgsQueSize=(TextView)findViewById(R.id.imgsQueSize);
+        imgsProcessing=(TextView)findViewById(R.id.imgsProcessing);
+
+        counter = (Chronometer) findViewById(R.id.chronCounter);
+        //counter.setFormat("H:MM:SS");
+        counter.setOnChronometerTickListener(new Chronometer.OnChronometerTickListener() {
+            @Override
+            public void onChronometerTick(Chronometer chronometer) {
+
+                String[] data = chronometer.getText().toString().split(":");
+                long time_millis = 0;
+                if(data.length == 3) {
+
+                    int hours = Integer.parseInt(data[0]);
+                    int minutes = Integer.parseInt(data[1]);
+                    int seconds = Integer.parseInt(data[2]);
+
+                    int time_secs = seconds + 60 * minutes + 3600 * hours;
+                    time_millis = TimeUnit.MILLISECONDS.convert(time_secs, TimeUnit.SECONDS);
+                }
+
+                else{
+                    int minutes = Integer.parseInt(data[0]);
+                    int seconds = Integer.parseInt(data[1]);
+
+                    int time_secs = seconds + 60 * minutes ;
+                    time_millis = TimeUnit.MILLISECONDS.convert(time_secs, TimeUnit.SECONDS);
+                }
+
+                if(time_millis >= camera_visible_time_frame-10000
+                        && time_millis <= camera_visible_time_frame)
+                {
+                    counter.setTextColor(Color.rgb(255,0,0));
+                }
+                if(time_millis >= camera_visible_time_frame)
+                {
+                    counter.stop();
+                    capture_btn.setVisibility(View.INVISIBLE);
+                    remove_capture_btn_flag = true;
+                }
+            }
+        });
+
 
         mVisible = true;
         mControlsView = findViewById(R.id.fullscreen_content_controls);
@@ -266,6 +322,9 @@ public class FullscreenActivity extends AppCompatActivity {
         // operations to prevent the jarring behavior of controls going away
         // while interacting with the UI.
         findViewById(R.id.ExitActionButton).setOnTouchListener(mDelayHideTouchListener);
+
+        trainCountRemaining = (TextView) findViewById(R.id.trainCountRemaining);
+        trainCountRemaining.setVisibility(View.INVISIBLE);
 
         /*ActionBar actionBar = getSupportActionBar();
         if (actionBar != null) {
@@ -285,7 +344,8 @@ public class FullscreenActivity extends AppCompatActivity {
                     FullscreenActivity.id,
                     FullscreenActivity.Authentication_Token,
                     FullscreenActivity.Authentication_Method,
-                    FullscreenActivity.iot_event_for_img_base64);
+                    FullscreenActivity.iot_event_for_img_base64,
+                    FullscreenActivity.this);
 
             try {
                 this.iot_svc.getIot_client().connect(true);
@@ -297,6 +357,8 @@ public class FullscreenActivity extends AppCompatActivity {
 
             /*stt_svc = new SpeechToText();
             stt_svc.setUsernameAndPassword(stt_uname,stt_pass);*/
+
+
 
             train_btn = (FloatingActionButton) findViewById(R.id.trainClassifier);
             train_btn.setOnClickListener(new View.OnClickListener() {
@@ -310,6 +372,9 @@ public class FullscreenActivity extends AppCompatActivity {
 
                     trainCaptureImgActionButton.setVisibility(View.VISIBLE);
                     exitTraining_btn.setVisibility(View.VISIBLE);
+                    trainCountRemaining.setVisibility(View.VISIBLE);
+                    trainCountRemaining.setText("Trainer Imgs remain : "+train_no_of_image);
+                    trainCountRemaining.setTextColor(Color.rgb(0,0,255));
 
                     tts_svc.playText("you can use camera capture button to capture the images. " +
                             "you need to give ten positive images to train the model. " +
@@ -382,6 +447,8 @@ public class FullscreenActivity extends AppCompatActivity {
                 @Override
                 public void onClick(View v) {
                     upload_btn.setVisibility(View.VISIBLE);
+                    trainCountRemaining.setVisibility(View.INVISIBLE);
+                    if(!remove_capture_btn_flag)
                     capture_btn.setVisibility(View.VISIBLE);
                     train_btn.setVisibility(View.VISIBLE);
                     exit_button.setVisibility(View.VISIBLE);
@@ -389,6 +456,15 @@ public class FullscreenActivity extends AppCompatActivity {
                     trainCaptureImgActionButton.setVisibility(View.INVISIBLE);
                     exitTraining_btn.setVisibility(View.INVISIBLE);
                     training_flag = false;
+
+                    if(trainingFiles.size() < train_no_of_image){
+                        Toast.makeText(getApplicationContext(), "cleaning up training images", Toast.LENGTH_LONG).show();
+                        for(File f:trainingFiles){
+                            f.delete();
+                        }
+                        trainingFiles.removeAll(trainingFiles);
+                    }
+
                 }
             });
 
@@ -442,11 +518,14 @@ public class FullscreenActivity extends AppCompatActivity {
                     e.printStackTrace();
                 }
                 //System.out.println("created file = "+tempPhoto.exists()+":"+tempPhoto.getAbsolutePath());
-                if(!training_flag)
-                this.queue.add(tempPhoto.toURI());
+                if(!training_flag) {
+                    this.queue.add(tempPhoto.toURI());
+                }
                 if(training_flag)
                     {
                     trainingFiles.add(tempPhoto);
+                        trainCountRemaining.setText("Trainer Imgs remain : "+(train_no_of_image-trainingFiles.size()));
+
                         if(trainingFiles.size()>=train_no_of_image){
                             if(positive_flag) {
                                 positive_flag=false;
@@ -506,12 +585,40 @@ public class FullscreenActivity extends AppCompatActivity {
         // created, to briefly hint to the user that UI controls
         // are available.
         delayedHide(100);
+        String random_img_obj_str=getRandomImgObjString(mContext.getString(R.string.allowable_obj_set).split(","),
+                Integer.valueOf(mContext.getString(R.string.possible_number_of_obj).trim()));
 
         if(!this.getIntent().hasExtra("calling_act"))
         tts_svc.playText("welcome watson bluemix platform. To end the game anytime click on exit " +
-                "button. To train and create the custom class. click on train button.", Voice.EN_MICHAEL);
+                "button. To train and create the custom class. click on train button." +
+                " you have "+camera_visible_time_frame/1000+". seconds to capture the images. "+
+                " you need to capture images that should contain objects like "+random_img_obj_str, Voice.EN_MICHAEL);
+
+        counter.start();
         //new ListenVoice().execute();
 
+    }
+
+    private String getRandomImgObjString(String[] allowable_obj_set, int possible_number_of_obj) {
+        String obj_str = "";
+        int nxt,i=0;
+        Set<Integer> random_num = new HashSet<Integer>();
+        if(possible_number_of_obj>allowable_obj_set.length){
+            possible_number_of_obj = allowable_obj_set.length;
+        }
+
+        do{
+            nxt = new Random().nextInt(allowable_obj_set.length);
+            if(!random_num.contains(new Integer(nxt)))
+            {
+                obj_str = allowable_obj_set[nxt]+". "+obj_str;
+                random_num.add(nxt);
+                i++;
+            }
+
+        }while(i<possible_number_of_obj);
+
+        return obj_str;
     }
 
     /**
