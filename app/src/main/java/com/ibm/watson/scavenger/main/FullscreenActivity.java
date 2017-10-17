@@ -377,7 +377,7 @@ public class FullscreenActivity extends AppCompatActivity {
                     trainCountRemaining.setTextColor(Color.rgb(0,0,255));
 
                     tts_svc.playText("you can use camera capture button to capture the images. " +
-                            "you need to give ten positive images to train the model. " +
+                            "you need to give. "+train_no_of_image+". positive images to train the model. " +
                             "Once you capture them custom classifier will be automatically created.",Voice.EN_MICHAEL);
 
                     LayoutInflater li = LayoutInflater.from(context);
@@ -401,7 +401,7 @@ public class FullscreenActivity extends AppCompatActivity {
                                             // get user input and set it to result
                                             // edit text
                                             vr_class_name = userInput.getText().toString().trim();
-                                            tts_svc.playText("please capture 10 positive images now.",Voice.EN_MICHAEL);
+                                            tts_svc.playText("please capture. "+train_no_of_image+". positive images now.",Voice.EN_MICHAEL);
                                         }
                                     })
                             .setNegativeButton("Cancel",
