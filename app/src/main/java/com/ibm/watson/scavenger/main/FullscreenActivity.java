@@ -529,7 +529,7 @@ public class FullscreenActivity extends AppCompatActivity {
                         if(trainingFiles.size()>=train_no_of_image){
                             if(positive_flag) {
                                 positive_flag=false;
-                                tts_svc.playText("you have captured ten positive images. Please wait.", Voice.EN_MICHAEL);
+                                tts_svc.playText("you have captured positive images. Please wait.", Voice.EN_MICHAEL);
                                 positive_zip = new ZipFiles().createAndAddZipFiles(vr_class_name +"_positive_example.zip",trainingFiles);
                                 trainingFiles=null;
                                 trainingFiles=new ArrayList<File>();
