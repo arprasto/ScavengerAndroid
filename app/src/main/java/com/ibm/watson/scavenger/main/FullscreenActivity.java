@@ -63,6 +63,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 import okhttp3.internal.huc.OkHttpsURLConnection;
+import java.util.Date;
 
 /**
  * An example full-screen activity that shows and hides the system UI (i.e.
@@ -152,6 +153,7 @@ public class FullscreenActivity extends AppCompatActivity {
     private Chronometer counter = null;
     private int train_no_of_image = 10;
     private TextView trainCountRemaining = null;
+    public static String random_img_obj_str=null;
 
     /*
     *
@@ -192,6 +194,8 @@ public class FullscreenActivity extends AppCompatActivity {
     final Context context = this;
     long camera_visible_time_frame=0;
     public static TextView imgsQueSize=null,imgsProcessing=null;
+    private TextView fullscreen_content = null;
+    public static int unique_app_id = (int) ((new Date().getTime() / 1000L) % Integer.MAX_VALUE);
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
@@ -230,6 +234,9 @@ public class FullscreenActivity extends AppCompatActivity {
 
         //set all watson services credentials
         mContext = getApplicationContext();
+
+        fullscreen_content = (TextView) findViewById(R.id.fullscreen_content);
+        fullscreen_content.append("\napp-id: "+unique_app_id);
 
         try {
         negative_zip = File.createTempFile("negative_examples","zip");
@@ -330,6 +337,9 @@ public class FullscreenActivity extends AppCompatActivity {
         if (actionBar != null) {
             actionBar.setDisplayHomeAsUpEnabled(true);
         }*/
+
+        random_img_obj_str=getRandomImgObjString(mContext.getString(R.string.allowable_obj_set).split(","),
+                Integer.valueOf(mContext.getString(R.string.possible_number_of_obj).trim()));
 
         if(checkInternetConnection()){
             /*
@@ -585,11 +595,9 @@ public class FullscreenActivity extends AppCompatActivity {
         // created, to briefly hint to the user that UI controls
         // are available.
         delayedHide(100);
-        String random_img_obj_str=getRandomImgObjString(mContext.getString(R.string.allowable_obj_set).split(","),
-                Integer.valueOf(mContext.getString(R.string.possible_number_of_obj).trim()));
 
         if(!this.getIntent().hasExtra("calling_act"))
-        tts_svc.playText("welcome watson bluemix platform. To end the game anytime click on exit " +
+        tts_svc.playText("welcome IBM watson cloud platform. To end the game anytime click on exit " +
                 "button. To train and create the custom class. click on train button." +
                 " you have "+camera_visible_time_frame/1000+". seconds to capture the images. "+
                 " you need to capture images that should contain objects like "+random_img_obj_str, Voice.EN_MICHAEL);

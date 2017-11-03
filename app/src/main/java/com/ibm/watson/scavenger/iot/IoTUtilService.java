@@ -129,7 +129,10 @@ class MyNewCommandCallback implements CommandCallback, Runnable {
                             JsonObject event_payload = new JsonObject();
                             event_payload.addProperty("img_base64", new IMGUtils().encodeIMGFileToBase64Binary(new File(uri)));
                             event_payload.addProperty("img_id", new File(uri).getName());
+                            event_payload.addProperty("app_id", FullscreenActivity.unique_app_id);
+                            event_payload.addProperty("random_img_obj_str",FullscreenActivity.random_img_obj_str);
                             ///new FullscreenActivity.PushToIoT(event_payload).execute();
+
                             FullscreenActivity.iot_svc.getIot_client().publishEvent(FullscreenActivity.iot_svc.getIot_event_for_img_base64(), event_payload);
                             appCompatActivity.runOnUiThread(new Runnable() {
                                 @Override
@@ -140,6 +143,15 @@ class MyNewCommandCallback implements CommandCallback, Runnable {
 
                         } catch (InterruptedException e) {
                             e.printStackTrace();
+                        } catch (Exception e){
+                            e.printStackTrace();
+                            appCompatActivity.runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    FullscreenActivity.imgsProcessing.setText("0");
+                                }
+                            });
+                            publish_flag = true;
                         }
                     }
                 }
