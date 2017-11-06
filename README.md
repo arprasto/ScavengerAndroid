@@ -100,6 +100,25 @@ Navigate to file app/src/main/res/values/watson_config.xml and provide Bluemix s
     <string name="vr_api_key">xxxxxxxxx</string> 
     <string name="vr_classifier_name">DemoClassifier</string> 
 
+    <!-- allowable set of objects to capture images for Scavenger -->
+    <string name="allowable_obj_set">window,bag,person,bottle,room,bed</string>
+
+    <!-- actual number of allowable objects which will be selected randomly from allowable_obj_set for a particular Scavenger app session
+    	value(possible_number_of_obj) <= size(allowable_obj_set) -->
+    <string name="possible_number_of_obj">3</string>
+
+    <!-- time frame(millis) for Scavenger in which Image capturing will be allowed -->
+    <string name="time_frame">30000</string>
+
+    <!-- classifier training configuration starts here-->
+
+    <!-- number of images needed to train the classifier -->
+    <string name="train_no_of_image">10</string>
+
+    <!-- this zip file need to be added to assets folder -->
+    <string name="default_negative_zip">australianterrier.zip</string>
+    <!-- classifier training configuration ends here-->
+
 
 Home screen for Scavenger :
 <img src="app/libs/Snip20170814_13.png" allign="center"/>
