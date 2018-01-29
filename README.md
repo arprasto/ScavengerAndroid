@@ -121,4 +121,4 @@ Training screen :
 
 How to see VR Results:
 
-Please refer ScavengerWebResultApp here : https://github.com/arprasto/PredictionWebResultApp
+Please refer PredictionWebResultApp here : https://github.com/arprasto/PredictionWebResultApp
