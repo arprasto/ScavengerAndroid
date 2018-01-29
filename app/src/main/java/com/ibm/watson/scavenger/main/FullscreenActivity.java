@@ -153,7 +153,6 @@ public class FullscreenActivity extends AppCompatActivity {
     private Chronometer counter = null;
     private int train_no_of_image = 10;
     private TextView trainCountRemaining = null;
-    public static String random_img_obj_str=null;
 
     /*
     *
@@ -338,10 +337,7 @@ public class FullscreenActivity extends AppCompatActivity {
             actionBar.setDisplayHomeAsUpEnabled(true);
         }*/
 
-        random_img_obj_str=getRandomImgObjString(mContext.getString(R.string.allowable_obj_set).split(","),
-                Integer.valueOf(mContext.getString(R.string.possible_number_of_obj).trim()));
-
-        if(checkInternetConnection()){
+        //if(checkInternetConnection()){
             /*
             initiate all the services instances
              */
@@ -496,13 +492,12 @@ public class FullscreenActivity extends AppCompatActivity {
                     cameraHelper.dispatchTakePictureIntent();
                 }
             });
-
-        }
-        else{
+            trainCaptureImgActionButton.setVisibility(View.INVISIBLE);
+            exitTraining_btn.setVisibility(View.INVISIBLE);
+        //}
+        /*else{
             Toast.makeText(this, " No Internet Connection available ", Toast.LENGTH_LONG).show();
-        }
-        trainCaptureImgActionButton.setVisibility(View.INVISIBLE);
-        exitTraining_btn.setVisibility(View.INVISIBLE);
+        }*/
     }
 
     @Override
@@ -597,10 +592,9 @@ public class FullscreenActivity extends AppCompatActivity {
         delayedHide(100);
 
         if(!this.getIntent().hasExtra("calling_act"))
-        tts_svc.playText("welcome IBM watson cloud platform. To end the game anytime click on exit " +
+        tts_svc.playText("welcome IBM watson cloud platform. To exit from app anytime click on exit " +
                 "button. To train and create the custom class. click on train button." +
-                " you have "+camera_visible_time_frame/1000+". seconds to capture the images. "+
-                " you need to capture images that should contain objects like "+random_img_obj_str, Voice.EN_MICHAEL);
+                " you have "+camera_visible_time_frame/1000+". seconds to capture the images. ", Voice.EN_MICHAEL);
 
         counter.start();
         //new ListenVoice().execute();

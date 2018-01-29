@@ -1,6 +1,6 @@
-IBM Scavenger Hunting and Image Training through Android powered by IBM Watson
+IBM Watson Image Training through Android
 
-In this developer journey we will create Scavenger Hunt game and a Image training app for Android device based on Watson's below services:
+In this developer journey we will create Image training app for Android device based on Watson's below services:
 
 1. Text To Speech(TTS)
 3. Visual Recognition(VR)
@@ -12,9 +12,9 @@ Architecture:
 
 <img src="app/libs/Snip20170811_1.png" allign="center"/>
 
-This scavenger app consists of below two applications:
+This app consists of below two applications:
 1. Training App(to create and train a new custom classifier using Watson's VR)
-2. Scavenger App(to demonstrate the prediction results of each image through created custom classifier including default one.)
+2. Prediction App(to demonstrate the prediction results of each image through created custom classifier including default one.)
 
 
 After completing this journey you will understand how to:
@@ -78,7 +78,7 @@ Coding the app on Android Studio
 Android Studio is the Official IDE for Android. Android Studio provides the fastest tools for building apps on every type of Android device.
 Clone the repo and import the code in Android Studio,
 
-git clone https://github.com/IBM-Bluemix/chatbot-watson-android.git
+git clone https://github.com/arprasto/WatsonVRTrainingAndroid.git
 
 Watson Configuration Parameters(watson_config.xml)
 
@@ -100,13 +100,6 @@ Navigate to file app/src/main/res/values/watson_config.xml and provide Bluemix s
     <string name="vr_api_key">xxxxxxxxx</string> 
     <string name="vr_classifier_name">DemoClassifier</string> 
 
-    <!-- allowable set of objects to capture images for Scavenger -->
-    <string name="allowable_obj_set">window,bag,person,bottle,room,bed</string>
-
-    <!-- actual number of allowable objects which will be selected randomly from allowable_obj_set for a particular Scavenger app session
-    	value(possible_number_of_obj) <= size(allowable_obj_set) -->
-    <string name="possible_number_of_obj">3</string>
-
     <!-- time frame(millis) for Scavenger in which Image capturing will be allowed -->
     <string name="time_frame">30000</string>
 
@@ -120,7 +113,7 @@ Navigate to file app/src/main/res/values/watson_config.xml and provide Bluemix s
     <!-- classifier training configuration ends here-->
 
 
-Home screen for Scavenger :
+Home screen for Prediction App :
 <img src="app/libs/Snip20170814_13.png" allign="center"/>
 
 Training screen :
@@ -128,4 +121,4 @@ Training screen :
 
 How to see VR Results:
 
-Please refer ScavengerWebResultApp here : https://github.com/arprasto/ScavengerWebResultApp
+Please refer ScavengerWebResultApp here : https://github.com/arprasto/PredictionWebResultApp

@@ -1,6 +1,6 @@
 <resources>
-    <string name="app_name">IBMScavenger</string>
-    <string name="dummy_content">IBM Watson\nScavenger</string>
-    <string name="vr_screen">Scavenger Main Screen</string>
+    <string name="app_name">VRTrainer</string>
+    <string name="dummy_content">IBM Watson\nVRTrainer</string>
+    <string name="vr_screen">VRTrainer Main Screen</string>
     <string name="hint">enter classfier name</string>
 </resources>
