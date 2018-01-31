@@ -1,19 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Watson Text To Speech service credentials-->
-    <string name="tts_uname">7346158d-04c6-4d24-af73-8eee69c91f74</string> 
-    <string name="tts_pass">nSX3HLdFkPK4</string> 
+    <string name="tts_uname">XXXXXXX</string> 
+    <string name="tts_pass">XXXXXXX</string> 
 
     <!-- Watson IoT device details-->
-    <string name="Organization_ID">dzj2si</string> 
+    <string name="Organization_ID">XXXXXXX</string> 
     <string name="type">MyIoTDevice</string> 
     <string name="id">MyIoTDevice</string> 
-    <string name="Authentication_Token">geek12345</string> 
+    <string name="Authentication_Token">XXXXXXX</string> 
     <string name="Authentication_Method">token</string> 
     <string name="iot_event_for_img_base64">capture_store</string> 
 
     <!-- Watson Visual Recognition service credentials-->
-    <string name="vr_api_key">1154833ff085650830906830a4b81e071b8dfe76</string> 
+    <string name="vr_api_key">XXXXXXX</string> 
     <string name="vr_classifier_name">testClassifier</string> 
 
     <!-- time frame(millis) for Scavenger in which Image capturing will be allowed -->
