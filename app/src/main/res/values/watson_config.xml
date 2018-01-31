@@ -1,34 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Watson Text To Speech service credentials-->
-    <string name="tts_uname">XXXXXXXXXXXXXXXX</string> 
-    <string name="tts_pass">XXXXXXXXXXXXXXXX</string> 
+    <string name="tts_uname">7346158d-04c6-4d24-af73-8eee69c91f74</string> 
+    <string name="tts_pass">nSX3HLdFkPK4</string> 
 
     <!-- Watson IoT device details-->
-    <string name="Organization_ID">XXXXXXXXXXXXXXXX</string> 
-    <string name="type">XXXXXXXXXXXXXXXX</string> 
-    <string name="id">XXXXXXXXXXXXXXXX</string> 
-    <string name="Authentication_Token">XXXXXXXXXXXXXXXX</string> 
+    <string name="Organization_ID">dzj2si</string> 
+    <string name="type">MyIoTDevice</string> 
+    <string name="id">MyIoTDevice</string> 
+    <string name="Authentication_Token">geek12345</string> 
     <string name="Authentication_Method">token</string> 
     <string name="iot_event_for_img_base64">capture_store</string> 
 
     <!-- Watson Visual Recognition service credentials-->
-    <string name="vr_api_key">XXXXXXXXXXXXXXXX</string> 
-    <string name="vr_classifier_name">DemoClassifier</string> 
-
-    <!-- allowable set of objects to capture images for Scavenger -->
-    <string name="allowable_obj_set">window,bag,person,bottle,room,bed</string>
-
-    <!-- actual number of allowable objects which will be selected randomly from allowable_obj_set for a particular Scavenger app session
-	value(possible_number_of_obj) <= size(allowable_obj_set) -->
-    <string name="possible_number_of_obj">3</string>
+    <string name="vr_api_key">1154833ff085650830906830a4b81e071b8dfe76</string> 
+    <string name="vr_classifier_name">testClassifier</string> 
 
     <!-- time frame(millis) for Scavenger in which Image capturing will be allowed -->
     <string name="time_frame">30000</string>
-    
+
     <!-- classifier training configuration starts here-->
 
-    <!-- number of images needed to train the classifier -->
+    <!-- number of positive images needed to train the classifier -->
     <string name="train_no_of_image">10</string>
     
     <!-- this zip file need to be added to assets folder -->

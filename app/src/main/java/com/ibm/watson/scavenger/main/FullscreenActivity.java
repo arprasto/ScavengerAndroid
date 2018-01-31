@@ -37,8 +37,10 @@ import com.ibm.watson.developer_cloud.android.library.camera.CameraHelper;
 import com.ibm.watson.developer_cloud.speech_to_text.v1.SpeechToText;
 import com.ibm.watson.developer_cloud.text_to_speech.v1.model.Voice;
 import com.ibm.watson.developer_cloud.visual_recognition.v3.VisualRecognition;
-import com.ibm.watson.developer_cloud.visual_recognition.v3.model.ClassifierOptions;
-import com.ibm.watson.developer_cloud.visual_recognition.v3.model.VisualClassifier;
+import com.ibm.watson.developer_cloud.visual_recognition.v3.model.Classifier;
+import com.ibm.watson.developer_cloud.visual_recognition.v3.model.CreateClassifierOptions;
+import com.ibm.watson.developer_cloud.visual_recognition.v3.model.ListClassifiersOptions;
+import com.ibm.watson.developer_cloud.visual_recognition.v3.model.UpdateClassifierOptions;
 import com.ibm.watson.scavenger.iot.IoTUtilService;
 import com.ibm.watson.scavenger.tts.ScavengerTextToSpeech;
 import com.ibm.watson.scavenger.util.ZipFiles;
@@ -48,11 +50,13 @@ import org.eclipse.paho.client.mqttv3.MqttException;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -63,7 +67,6 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 import okhttp3.internal.huc.OkHttpsURLConnection;
-import java.util.Date;
 
 /**
  * An example full-screen activity that shows and hides the system UI (i.e.
@@ -238,7 +241,7 @@ public class FullscreenActivity extends AppCompatActivity {
         fullscreen_content.append("\napp-id: "+unique_app_id);
 
         try {
-        negative_zip = File.createTempFile("negative_examples","zip");
+        negative_zip = File.createTempFile("negative_examples",".zip");
             default_negative_zip = mContext.getString(R.string.default_negative_zip);
             FileOutputStream os = new FileOutputStream(negative_zip);
         InputStream is = mContext.getAssets().open(default_negative_zip);
@@ -337,7 +340,25 @@ public class FullscreenActivity extends AppCompatActivity {
             actionBar.setDisplayHomeAsUpEnabled(true);
         }*/
 
-        //if(checkInternetConnection()){
+        if(!checkInternetConnection()){
+            Toast.makeText(this, " No Internet Connection available ", Toast.LENGTH_LONG).show();
+            AlertDialog.Builder builder1 = new AlertDialog.Builder(context);
+            builder1.setMessage("Check your Internet Connectivity.");
+
+            builder1.setPositiveButton(
+                    "OK",
+                    new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            System.exit(0);
+                            dialog.cancel();
+                        }
+                    });
+
+            AlertDialog alert11 = builder1.create();
+            alert11.show();
+        }
+        else
+            {
             /*
             initiate all the services instances
              */
@@ -494,10 +515,7 @@ public class FullscreenActivity extends AppCompatActivity {
             });
             trainCaptureImgActionButton.setVisibility(View.INVISIBLE);
             exitTraining_btn.setVisibility(View.INVISIBLE);
-        //}
-        /*else{
-            Toast.makeText(this, " No Internet Connection available ", Toast.LENGTH_LONG).show();
-        }*/
+        }
     }
 
     @Override
@@ -508,7 +526,7 @@ public class FullscreenActivity extends AppCompatActivity {
 
                 Bitmap selectedImage = cameraHelper.getBitmap(resultCode);
                 //System.out.println(" bitmap captured : "+selectedImage.getHeight());
-                selectedImage = resizeBitmapForWatson(selectedImage, 902);
+                selectedImage = resizeBitmapForWatson(selectedImage, 900);
                 // Reformat Bitmap into a .jpg and save as file to input to Watson.
                 ByteArrayOutputStream bytes = new ByteArrayOutputStream();
                 selectedImage.compress(Bitmap.CompressFormat.JPEG, 80, bytes);
@@ -560,7 +578,7 @@ public class FullscreenActivity extends AppCompatActivity {
                 Bitmap selectedImage = fetchBitmapFromUri(uri);
 
                 // Resize the Bitmap to constrain within Watson Image Recognition's Size Limit.
-                selectedImage = resizeBitmapForWatson(selectedImage, 902);
+                selectedImage = resizeBitmapForWatson(selectedImage, 640);
 
                 // Reformat Bitmap into a .jpg and save as file to input to Watson.
                 ByteArrayOutputStream bytes = new ByteArrayOutputStream();
@@ -590,15 +608,33 @@ public class FullscreenActivity extends AppCompatActivity {
         // created, to briefly hint to the user that UI controls
         // are available.
         delayedHide(100);
+        if(!checkInternetConnection()){
+            Toast.makeText(this, " No Internet Connection available ", Toast.LENGTH_LONG).show();
+            AlertDialog.Builder builder1 = new AlertDialog.Builder(context);
+            builder1.setMessage("Check your Internet Connectivity.");
 
-        if(!this.getIntent().hasExtra("calling_act"))
-        tts_svc.playText("welcome IBM watson cloud platform. To exit from app anytime click on exit " +
-                "button. To train and create the custom class. click on train button." +
-                " you have "+camera_visible_time_frame/1000+". seconds to capture the images. ", Voice.EN_MICHAEL);
+            builder1.setPositiveButton(
+                    "OK",
+                    new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            System.exit(0);
+                            dialog.cancel();
+                        }
+                    });
 
-        counter.start();
-        //new ListenVoice().execute();
+            AlertDialog alert11 = builder1.create();
+            alert11.show();
+        }
 
+        else {
+            if (!this.getIntent().hasExtra("calling_act"))
+                tts_svc.playText("welcome IBM watson cloud platform. To exit from app anytime click on exit " +
+                        "button. To train and create the custom class. click on train button." +
+                        " you have " + camera_visible_time_frame / 1000 + ". seconds to capture the images. ", Voice.EN_MICHAEL);
+
+            counter.start();
+            //new ListenVoice().execute();
+        }
     }
 
     private String getRandomImgObjString(String[] allowable_obj_set, int possible_number_of_obj) {
@@ -786,38 +822,39 @@ public class FullscreenActivity extends AppCompatActivity {
         @Override
         protected Void doInBackground(Void... params) {
             tts_svc.playText("classifier is being trained now. Please wait.", Voice.EN_MICHAEL);
-            ClassifierOptions classifierOptions = new ClassifierOptions.Builder().classifierName(vr_classifier_name)
-                    .negativeExamples(negative_zip)
-                    .addClass(class_name, positive_zip)
-                    .build();
 
             boolean create_classifier_flag = true, update_classifier_flage=false,exit_loop=false;
             String classifier_id=null;
 
-            Iterator<VisualClassifier> classifiers_it = vr_svc.getVRInstance().getClassifiers().execute().iterator();
+            ListClassifiersOptions listClassifiersOptions = new ListClassifiersOptions.Builder()
+                    .verbose(true)
+                    .build();
+            Iterator<Classifier> classifiers_it = vr_svc.getVRInstance().listClassifiers(listClassifiersOptions).execute().getClassifiers().iterator();
             while(classifiers_it.hasNext()){
-                VisualClassifier classifier = classifiers_it.next();
+                Classifier classifier = classifiers_it.next();
                 Log.d(TAG,"classifier varification");
                 Log.d(TAG,"checking for "+classifier.getName());
                 if(classifier.getName().equalsIgnoreCase(vr_classifier_name))
                 {
                     create_classifier_flag = false;
-                    classifier_id = classifier.getId();
+                    classifier_id = classifier.getClassifierId();
                     Log.d(TAG,"found pre-existing "+classifier.getName()+":"+classifier_id);
                     int cnt=0;
-                    for(VisualClassifier.VisualClass claz:classifier.getClasses())
+                    for(com.ibm.watson.developer_cloud.visual_recognition.v3.model.Class claz:classifier.getClasses())
                     {
                         cnt++;
-                        Log.d(TAG," checking for "+classifier_id+"."+claz.getName());
-                        if(claz.getName().equalsIgnoreCase(class_name)){
-                            Log.d(TAG," found preexisting "+classifier_id+"."+claz.getName());
-                            tts_svc.playText("looks like given class name already exists. Please try giving different class name. and rerun training.",Voice.EN_MICHAEL);
+                        Log.d(TAG," checking for "+classifier_id+"."+claz.getClassName());
+                        if(claz.getClassName().equalsIgnoreCase(class_name)){
+                            Log.d(TAG," found preexisting "+classifier_id+"."+claz.getClassName());
+                            tts_svc.playText("looks like given class name already exists. Let me retrain it.",Voice.EN_MICHAEL);
                             try {
                                 Thread.sleep(6000);
                             } catch (InterruptedException e) {
                                 e.printStackTrace();
                             }
                             //System.exit(0);
+                            update_classifier_flage = true;
+                            exit_loop =true;
                         }
                         else if(cnt==classifier.getClasses().size()){
                             update_classifier_flage = true;
@@ -833,17 +870,42 @@ public class FullscreenActivity extends AppCompatActivity {
 
 
             if(create_classifier_flag){
-                Log.d(TAG,"creating new classifier "+classifierOptions.classifierName());
+                CreateClassifierOptions classifierOptions = null;
+                try {
+                    classifierOptions = new CreateClassifierOptions.Builder()
+                            .name(vr_classifier_name)
+                            .negativeExamples(this.negative_zip)
+                            .negativeExamplesFilename(this.negative_zip.getName())
+                            .addClass(this.class_name, this.positive_zip)
+                            .build();
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                }
+
+                System.out.println(this.negative_zip.getPath()+":: arpit ::"+this.negative_zip.exists()+":: arpit ::"+this.positive_zip.getPath()+":: arpit ::"+this.positive_zip.exists());
+                Log.d(TAG,"creating new classifier "+classifierOptions.name());
                 tts_svc.playText("looks like you are training very first time. Let me train the model for you.",Voice.EN_MICHAEL);
-                VisualClassifier vc = vr_svc.getVRInstance().createClassifier(classifierOptions).execute();
+                Classifier vc = vr_svc.getVRInstance().createClassifier(classifierOptions).execute();
                 tts_svc.playText("your classifier is being trained. please try using it after some time.",Voice.EN_MICHAEL);
 
             }
 
             if(update_classifier_flage && classifier_id!=null){
-                Log.d(TAG,"updating classifier "+classifierOptions.classifierName());
+                UpdateClassifierOptions updateoptions = null;
+                try {
+                    updateoptions = new UpdateClassifierOptions.Builder()
+                            .classifierId(classifier_id)
+                            .addClass(this.class_name, this.positive_zip)
+                            .negativeExamples(this.negative_zip)
+                            .negativeExamplesFilename(this.negative_zip.getName())
+                            .build();
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                }
+                System.out.println(negative_zip.getPath()+":: arpit ::"+negative_zip.exists()+":: arpit ::"+this.positive_zip.getPath()+":: arpit ::"+this.positive_zip.exists());
+                Log.d(TAG,"updating classifier "+updateoptions.classifierId());
                 tts_svc.playText("Let me update classifier for you.",Voice.EN_MICHAEL);
-                VisualClassifier vc = vr_svc.getVRInstance().updateClassifier(classifier_id, classifierOptions).execute();
+                Classifier vc = vr_svc.getVRInstance().updateClassifier(updateoptions).execute();
                 tts_svc.playText("your classifier is being updated. please try using it after some time.",Voice.EN_MICHAEL);
             }
             return null;
