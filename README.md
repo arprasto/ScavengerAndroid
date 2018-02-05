@@ -16,6 +16,7 @@ This app consists of below two applications:
 1. Training App(to create and train a new custom classifier using Watson's VR)
 2. Prediction App(to demonstrate the prediction results of each image through created custom classifier including default one.)
 
+For quick overveiw of app see <a href="app/libs/intro.mp4">this</a> vedio.
 
 After completing this journey you will understand how to:
 a. Authorize a person through creating a custom classifier in IBM Watson visual recognition.
